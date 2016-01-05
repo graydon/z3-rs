@@ -125,6 +125,14 @@ impl<'ctx> Ast<'ctx> {
                            num as ::libc::c_int,
                            den as ::libc::c_int)
             })
+
+    pub fn from_str(ctx: &'ctx Context, s: &str, sort: &Sort) -> Ast<'ctx> {
+            Ast::new(ctx, unsafe {
+                let pp = CString::new(s).unwrap();
+                let p = pp.as_ptr();
+                let guard = Z3_MUTEX.lock().unwrap();
+                Z3_mk_numeral(ctx.z3_ctx, p, sort.z3_sort)
+            })
     }
 
     pub fn as_bool(&self) -> Option<bool> {

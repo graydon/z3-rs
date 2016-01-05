@@ -70,3 +70,25 @@ fn test_solving_for_model() {
     assert!(xv + 2 > 7);
 }
 
+#[test]
+fn test_bitvector_from_str() {
+    let _ = env_logger::init();
+    let cfg = Config::new();
+    let ctx = Context::new(&cfg);
+    let x = ctx.named_bitvector_const("x", 32);
+    let zero = ctx.from_str("0", &ctx.bitvector_sort(32));
+    let one = ctx.from_str("1", &ctx.bitvector_sort(32));
+    let two = ctx.from_str("2", &ctx.bitvector_sort(32));
+    let four = ctx.from_str("4", &ctx.bitvector_sort(32));
+
+    let solver = Solver::new(&ctx);
+    solver.assert(&x.bvugt(&zero));
+    solver.assert(&x._eq(&two));
+    solver.assert(&x.bvult(&four));
+    solver.assert(&x.bvshl(&one)._eq(&four));
+    assert!(solver.check());
+
+    let model = solver.get_model();
+    let xv = model.eval(&x).unwrap().as_i64().unwrap();
+    assert!(xv == 2);
+}
