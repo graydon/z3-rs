@@ -135,6 +135,15 @@ impl<'ctx> Ast<'ctx> {
                 Z3_mk_numeral(ctx.z3_ctx, p, sort.z3_sort)
             })
     }
+    
+    pub fn bitvector_from_u64(ctx: &'ctx Context, u: u64, sz: u32) -> Ast<'ctx> {
+            Ast::new(ctx, unsafe {
+                let sort = ctx.bitvector_sort(sz);
+                let guard = Z3_MUTEX.lock().unwrap();
+                Z3_mk_unsigned_int64(ctx.z3_ctx, u, sort.z3_sort)
+            })
+        
+    }
 
     pub fn as_bool(&self) -> Option<bool> {
         unsafe {

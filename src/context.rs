@@ -133,6 +133,10 @@ impl Context {
     pub fn from_str(&self, s: &str, sort: &Sort) -> Ast {
         Ast::from_str(self, s, sort)
     }
+    
+    pub fn bitvector_from_u64(&self, u: u64, sz: u32) -> Ast {
+            Ast::bitvector_from_u64(self, u, sz)
+    }
 }
 
 impl Drop for Context {

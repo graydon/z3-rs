@@ -92,3 +92,23 @@ fn test_bitvector_from_str() {
     let xv = model.eval(&x).unwrap().as_i64().unwrap();
     assert!(xv == 2);
 }
+
+#[test]
+fn test_bitvector_u64() {
+    let _ = env_logger::init();
+    let cfg = Config::new();
+    let ctx = Context::new(&cfg);
+    let x = ctx.named_bitvector_const("x", 8);
+    let zero = ctx.bitvector_from_u64(0, 8);
+    let one = ctx.bitvector_from_u64(1, 8);
+
+    let solver = Solver::new(&ctx);
+    solver.assert(&x._eq(&zero.bvadd(&one)));
+    assert!(solver.check());
+
+    let model = solver.get_model();
+    let xv = model.eval(&x).unwrap().as_i64().unwrap();
+    assert!(xv == 1);
+
+
+}
