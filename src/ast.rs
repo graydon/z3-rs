@@ -125,6 +125,7 @@ impl<'ctx> Ast<'ctx> {
                            num as ::libc::c_int,
                            den as ::libc::c_int)
             })
+    }
 
     pub fn from_str(ctx: &'ctx Context, s: &str, sort: &Sort) -> Ast<'ctx> {
             Ast::new(ctx, unsafe {
