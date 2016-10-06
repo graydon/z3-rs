@@ -56,8 +56,7 @@ pub struct Sort<'ctx>
 
 pub struct ListSort<'ctx>
 {
-    ctx: &'ctx Context,
-    z3_sort: Z3_sort,
+    sort: Sort<'ctx>,
     nil_decl: Z3_func_decl,
     is_nil_decl: Z3_func_decl,
     cons_decl: Z3_func_decl,
@@ -68,8 +67,7 @@ pub struct ListSort<'ctx>
 
 pub struct EnumSort<'ctx>
 {
-    ctx: &'ctx Context,
-    z3_sort: Z3_sort,
+    sort: Sort<'ctx>,
     value_names: Box<[String]>,
     consts: Box<[Z3_func_decl]>,
     testers: Box<[Z3_func_decl]>

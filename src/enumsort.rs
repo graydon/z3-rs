@@ -6,20 +6,27 @@ use Z3_MUTEX;
 use std::ptr;
 
 use ast;
+use sort;
 
 impl<'ctx> EnumSort<'ctx> {
-    pub fn sort(&self) -> Sort<'ctx> {
-        Sort {
-            ctx: self.ctx,
-            z3_sort: self.z3_sort
-        }
-    }
+    pub fn sort(&'ctx self) -> &'ctx Sort<'ctx> { &self.sort }
 
     pub fn value(&self, name: &str) -> Ast<'ctx> {
         let (n, _) = self.value_names.iter().enumerate().filter(|&(n, nm)| nm.eq(name)).next().unwrap();
-        Ast::new(self.ctx, unsafe {
+        Ast::new(self.sort.ctx, unsafe {
             let guard = Z3_MUTEX.lock().unwrap();
-            ast::check_ast(self.ctx, Z3_mk_app(self.ctx.z3_ctx, self.consts[n], 0, ptr::null()))
+            ast::check_ast(self.sort.ctx, Z3_mk_app(self.sort.ctx.z3_ctx, self.consts[n], 0, ptr::null()))
         })
+    }
+}
+
+impl<'ctx> Drop for EnumSort<'ctx> {
+    fn drop(&mut self) {
+        unsafe {
+            let guard = Z3_MUTEX.lock().unwrap();
+            for decl in (&self.consts).into_iter().chain((&self.testers).into_iter()) {
+                sort::func_decl_dec_ref(self.sort.ctx, *decl);
+            }
+        }
     }
 }
