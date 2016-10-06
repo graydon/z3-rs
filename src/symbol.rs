@@ -4,6 +4,13 @@ use Context;
 use Z3_MUTEX;
 use std::ffi::CString;
 
+use context;
+
+pub unsafe fn check_symbol(ctx: &Context, sym: Z3_symbol) -> Z3_symbol {
+    if sym.is_null() { context::check_error(ctx) };
+    sym
+}
+
 impl<'ctx> Symbol<'ctx> {
     pub fn from_int(ctx: &Context, i: u32) -> Symbol {
         Symbol {
@@ -11,7 +18,7 @@ impl<'ctx> Symbol<'ctx> {
             cst: None,
             z3_sym: unsafe {
                 let guard = Z3_MUTEX.lock().unwrap();
-                Z3_mk_int_symbol(ctx.z3_ctx, i as ::libc::c_int)
+                check_symbol(ctx, Z3_mk_int_symbol(ctx.z3_ctx, i as ::libc::c_int))
             }
         }
     }
@@ -24,7 +31,7 @@ impl<'ctx> Symbol<'ctx> {
             cst: Some(ss),
             z3_sym: unsafe {
                 let guard = Z3_MUTEX.lock().unwrap();
-                Z3_mk_string_symbol(ctx.z3_ctx, p)
+                check_symbol(ctx, Z3_mk_string_symbol(ctx.z3_ctx, p))
             }
         }
     }

@@ -23,6 +23,8 @@ mod ast;
 mod solver;
 mod optimize;
 mod model;
+mod enumsort;
+mod listsort;
 
 // Z3 appears to be only mostly-threadsafe, a few initializers
 // and such race; so we mutex-guard all access to the library.
@@ -50,6 +52,27 @@ pub struct Sort<'ctx>
 {
     ctx: &'ctx Context,
     z3_sort: Z3_sort
+}
+
+pub struct ListSort<'ctx>
+{
+    ctx: &'ctx Context,
+    z3_sort: Z3_sort,
+    nil_decl: Z3_func_decl,
+    is_nil_decl: Z3_func_decl,
+    cons_decl: Z3_func_decl,
+    is_cons_decl: Z3_func_decl,
+    head_decl: Z3_func_decl,
+    tail_decl: Z3_func_decl
+}
+
+pub struct EnumSort<'ctx>
+{
+    ctx: &'ctx Context,
+    z3_sort: Z3_sort,
+    value_names: Box<[String]>,
+    consts: Box<[Z3_func_decl]>,
+    testers: Box<[Z3_func_decl]>
 }
 
 pub struct Ast<'ctx>

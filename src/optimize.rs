@@ -5,6 +5,8 @@ use Model;
 use Ast;
 use Z3_MUTEX;
 
+use context;
+
 impl<'ctx> Optimize<'ctx> {
     pub fn new(ctx: &'ctx Context) -> Optimize<'ctx> {
         Optimize {
@@ -12,6 +14,7 @@ impl<'ctx> Optimize<'ctx> {
             z3_opt: unsafe {
                 let guard = Z3_MUTEX.lock().unwrap();
                 let opt = Z3_mk_optimize(ctx.z3_ctx);
+                if opt.is_null() { context::check_error(ctx) };
                 Z3_optimize_inc_ref(ctx.z3_ctx, opt);
                 opt
             }
@@ -30,26 +33,31 @@ impl<'ctx> Optimize<'ctx> {
     pub fn maximize(&self, ast: &Ast<'ctx>) {
         unsafe {
             let guard = Z3_MUTEX.lock().unwrap();
-            Z3_optimize_maximize(self.ctx.z3_ctx,
-                                 self.z3_opt,
-                                 ast.z3_ast);
+            if Z3_optimize_maximize(self.ctx.z3_ctx,
+                                     self.z3_opt,
+                                     ast.z3_ast) == 0 {
+                context::check_error(self.ctx)
+            };
         }
     }
 
     pub fn minimize(&self, ast: &Ast<'ctx>) {
         unsafe {
             let guard = Z3_MUTEX.lock().unwrap();
-            Z3_optimize_minimize(self.ctx.z3_ctx,
-                                 self.z3_opt,
-                                 ast.z3_ast);
+            if Z3_optimize_minimize(self.ctx.z3_ctx,
+                                    self.z3_opt,
+                                    ast.z3_ast) == 0 {
+                context::check_error(self.ctx)
+            };
         }
     }
 
     pub fn check(&self) -> bool {
         unsafe {
             let guard = Z3_MUTEX.lock().unwrap();
-            Z3_optimize_check(self.ctx.z3_ctx,
-                              self.z3_opt) == Z3_TRUE
+            let res = Z3_optimize_check(self.ctx.z3_ctx, self.z3_opt);
+            context::check_error(self.ctx);
+            res == Z3_TRUE
         }
     }
 

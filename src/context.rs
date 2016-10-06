@@ -5,6 +5,17 @@ use Sort;
 use Symbol;
 use Ast;
 use Z3_MUTEX;
+use std::ffi::CStr;
+use std::borrow::Cow;
+
+pub unsafe fn check_error(ctx: &Context) {
+    let code = Z3_get_error_code(ctx.z3_ctx);
+    if code != Z3_OK {
+        let cmessage = Z3_get_error_msg(ctx.z3_ctx, code);
+        let message : Cow<str> = CStr::from_ptr(cmessage).to_string_lossy();
+        panic!("Z3 error code {}: {}", code, &message)
+    }
+}
 
 impl Context {
     pub fn new(cfg: &Config) -> Context {
@@ -13,6 +24,7 @@ impl Context {
                 let guard = Z3_MUTEX.lock().unwrap();
                 let p = Z3_mk_context_rc(cfg.z3_cfg);
                 debug!("new context {:p}", p);
+                assert!(!p.is_null());
                 p
             }
         }
