@@ -4,6 +4,8 @@ use Ast;
 use EnumSort;
 use Z3_MUTEX;
 use std::ptr;
+use std::fmt::{Formatter,Display};
+use std;
 
 use ast;
 use sort;
@@ -17,6 +19,12 @@ impl<'ctx> EnumSort<'ctx> {
             let guard = Z3_MUTEX.lock().unwrap();
             ast::check_ast(self.sort.ctx, Z3_mk_app(self.sort.ctx.z3_ctx, self.consts[n], 0, ptr::null()))
         })
+    }
+}
+
+impl<'ctx> Display for EnumSort<'ctx> {
+    fn fmt(&self, formatter: &mut Formatter) -> std::fmt::Result {
+        self.sort().fmt(formatter)
     }
 }
 

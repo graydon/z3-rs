@@ -6,7 +6,9 @@ use ListSort;
 use EnumSort;
 use Z3_MUTEX;
 use std::ptr;
-use std::ffi::CString;
+use std::ffi::{CStr,CString};
+use std::fmt::{Formatter,Display};
+use std;
 
 use context;
 
@@ -180,6 +182,17 @@ impl<'ctx> Sort<'ctx> {
                 consts: enum_consts.into_boxed_slice(),
                 testers: enum_testers.into_boxed_slice()
             }
+        }
+    }
+}
+
+impl<'ctx> Display for Sort<'ctx> {
+    fn fmt(&self, formatter: &mut Formatter) -> std::fmt::Result {
+        unsafe {
+            let guard = Z3_MUTEX.lock().unwrap();
+            let res = Z3_sort_to_string(self.ctx.z3_ctx, self.z3_sort);
+            if res.is_null() { context::check_error(self.ctx) };
+            formatter.write_str(CStr::from_ptr(res).to_string_lossy().as_ref())
         }
     }
 }

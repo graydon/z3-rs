@@ -6,7 +6,10 @@ use Ast;
 use Z3_MUTEX;
 use std::hash::{Hash, Hasher};
 use std::cmp::{PartialEq, Eq};
-use std::ffi::CString;
+use std::ffi::{CStr, CString};
+use std::fmt::{Display, Formatter};
+use std;
+use num::FromPrimitive;
 
 use context;
 
@@ -187,6 +190,37 @@ impl<'ctx> Ast<'ctx> {
         }
     }
 
+    pub fn as_app(&self) -> Option<(Ast<'ctx>, Vec<Ast<'ctx>>)> {
+        unsafe {
+            let is_app = Z3_is_app(self.ctx.z3_ctx, self.z3_ast);
+            if is_app == 0 {
+                context::check_error(self.ctx);
+                None
+            } else {
+                let app = Z3_to_app(self.ctx.z3_ctx, self.z3_ast);
+                if app.is_null() { context::check_error(self.ctx) };
+
+                let decl = Z3_get_app_decl(self.ctx.z3_ctx, app);
+                if decl.is_null() { context::check_error(self.ctx) };
+
+                let decl_ast = Z3_func_decl_to_ast(self.ctx.z3_ctx, decl);
+                if decl_ast.is_null() { context::check_error(self.ctx) };
+
+                let nargs = Z3_get_app_num_args(self.ctx.z3_ctx, app);
+                if nargs <= 0 { context::check_error(self.ctx) };
+
+                let mut arg_asts = Vec::with_capacity(FromPrimitive::from_u32(nargs).unwrap());
+                for i in 0..nargs {
+                    let arg = Z3_get_app_arg(self.ctx.z3_ctx, app, i);
+                    if arg.is_null() { context::check_error(self.ctx) };
+                    arg_asts.push(Ast::new(self.ctx, arg))
+                }
+
+                Some((Ast::new(self.ctx, decl_ast), arg_asts))
+            }
+        }
+    }
+
     varop!(distinct, Z3_mk_distinct);
 
     // Boolean ops
@@ -260,6 +294,17 @@ impl<'ctx> Ast<'ctx> {
     binop!(set_member, Z3_mk_set_member);
     binop!(set_subset, Z3_mk_set_subset);
     unop!(set_complement, Z3_mk_set_complement);
+}
+
+impl<'ctx> Display for Ast<'ctx> {
+    fn fmt(&self, formatter: &mut Formatter) -> std::fmt::Result {
+        unsafe {
+            let guard = Z3_MUTEX.lock().unwrap();
+            let res = Z3_ast_to_string(self.ctx.z3_ctx, self.z3_ast);
+            if res.is_null() { context::check_error(self.ctx) };
+            formatter.write_str(CStr::from_ptr(res).to_string_lossy().as_ref())
+        }
+    }
 }
 
 impl<'ctx> Drop for Ast<'ctx> {

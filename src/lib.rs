@@ -11,6 +11,8 @@ extern crate lazy_static;
 extern crate z3_sys;
 extern crate libc;
 
+extern crate num;
+
 use std::sync::Mutex;
 use std::ffi::CString;
 use z3_sys::*;
