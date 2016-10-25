@@ -27,6 +27,7 @@ mod optimize;
 mod model;
 mod enumsort;
 mod listsort;
+mod funcdecl;
 
 // Z3 appears to be only mostly-threadsafe, a few initializers
 // and such race; so we mutex-guard all access to the library.
@@ -79,6 +80,12 @@ pub struct Ast<'ctx>
 {
     ctx: &'ctx Context,
     z3_ast: Z3_ast
+}
+
+pub struct FuncDecl<'ctx>
+{
+    ctx: &'ctx Context,
+    z3_func_decl: Z3_func_decl
 }
 
 pub struct Solver<'ctx>

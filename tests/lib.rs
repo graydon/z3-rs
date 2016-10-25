@@ -108,3 +108,26 @@ fn test_lists() {
     assert!(solver.check());
     assert_eq!(solver.get_model().eval(&snd).unwrap().as_i64().unwrap(), 20i64);
 }
+
+#[test]
+fn test_forall() {
+    let _ = env_logger::init();
+    let cfg = Config::new();
+    let ctx = Context::new(&cfg);
+    let solver = Solver::new(&ctx);
+
+    let xsym = Symbol::from_string(&ctx, "x");
+    let sort = Sort::int(&ctx);
+
+    let y = Ast::fresh_const(&ctx, "y", &sort);
+
+    let x = Ast::bound(0, &sort);
+    let q = Ast::forall_bound(&[(&xsym, &x)], &x._eq(&ctx.from_i64(100)).implies(&x._eq(&y)));
+    // Equivalent:
+    //let x = Ast::new_const(&xsym, &sort);
+    //let q = Ast::forall_const(&[&x], &x._eq(&ctx.from_i64(100)).implies(&x._eq(&y)));
+
+    solver.assert(&q);
+    assert!(solver.check());
+    assert_eq!(solver.get_model().eval(&y).unwrap().as_i64().unwrap(), 100);
+}

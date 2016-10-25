@@ -9,6 +9,7 @@ use std::cmp::{PartialEq, Eq};
 use std::ffi::{CStr, CString};
 use std::fmt::{Display, Formatter};
 use std;
+use libc::c_uint;
 use num::FromPrimitive;
 
 use context;
@@ -99,6 +100,41 @@ impl<'ctx> Ast<'ctx> {
             let p = pp.as_ptr();
             let guard = Z3_MUTEX.lock().unwrap();
             check_ast(ctx, Z3_mk_fresh_const(ctx.z3_ctx, p, sort.z3_sort))
+        })
+    }
+
+    pub fn bound(index: c_uint, sort: &'ctx Sort) -> Ast<'ctx> {
+        Ast::new(sort.ctx, unsafe {
+            check_ast(sort.ctx, Z3_mk_bound(sort.ctx.z3_ctx, index, sort.z3_sort))
+        })
+    }
+
+    pub fn forall_bound(bound: &[(&Symbol<'ctx>, &Ast<'ctx>)], body: &Ast<'ctx>) -> Ast<'ctx> {
+        let len32 = FromPrimitive::from_usize(bound.len()).unwrap();
+
+        Ast::new(body.ctx, unsafe {
+            let guard = Z3_MUTEX.lock().unwrap();
+            let sorts = bound.iter().map(|&(_, ref ast)| {
+                let s = Z3_get_sort(body.ctx.z3_ctx, ast.z3_ast);
+                if s.is_null() { context::check_error(body.ctx) }
+                s
+            }).collect::<Vec<Z3_sort>>();
+            let decl_names = bound.iter().map(|&(ref sym, _)| sym.z3_sym).collect::<Vec<Z3_symbol>>();
+            check_ast(body.ctx, Z3_mk_forall(body.ctx.z3_ctx, 0, 0, std::ptr::null(), len32, sorts.as_ptr(), decl_names.as_ptr(), body.z3_ast))
+        })
+    }
+
+    pub fn forall_const(bound: &[&Ast<'ctx>], body: &Ast<'ctx>) -> Ast<'ctx> {
+        let len32 = FromPrimitive::from_usize(bound.len()).unwrap();
+
+        Ast::new(body.ctx, unsafe {
+            let guard = Z3_MUTEX.lock().unwrap();
+            let symbols = bound.iter().map(|&ast| {
+                let a = Z3_to_app(body.ctx.z3_ctx, ast.z3_ast);
+                if a.is_null() { context::check_error(body.ctx) }
+                a
+            }).collect::<Vec<Z3_app>>();
+            check_ast(body.ctx, Z3_mk_forall_const(body.ctx.z3_ctx, 1, len32, symbols.as_ptr(), 0, std::ptr::null(), body.z3_ast))
         })
     }
 

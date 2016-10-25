@@ -2,6 +2,7 @@ use z3_sys::*;
 use Sort;
 use Ast;
 use EnumSort;
+use FuncDecl;
 use Z3_MUTEX;
 use std::ptr;
 use std::fmt::{Formatter,Display};
@@ -13,12 +14,22 @@ use sort;
 impl<'ctx> EnumSort<'ctx> {
     pub fn sort(&'ctx self) -> &'ctx Sort<'ctx> { &self.sort }
 
-    pub fn value(&self, name: &str) -> Ast<'ctx> {
+    pub fn value_decl(&self, name: &str) -> FuncDecl<'ctx> {
         let (n, _) = self.value_names.iter().enumerate().filter(|&(n, nm)| nm.eq(name)).next().unwrap();
-        Ast::new(self.sort.ctx, unsafe {
-            let guard = Z3_MUTEX.lock().unwrap();
-            ast::check_ast(self.sort.ctx, Z3_mk_app(self.sort.ctx.z3_ctx, self.consts[n], 0, ptr::null()))
-        })
+        FuncDecl::wrap(self.sort.ctx, self.consts[n])
+    }
+
+    pub fn value(&self, name: &str) -> Ast<'ctx> {
+        self.value_decl(name).app(&[])
+    }
+
+    pub fn is_value_decl(&self, name: &str) -> FuncDecl<'ctx> {
+        let (n, _) = self.value_names.iter().enumerate().filter(|&(n, nm)| nm.eq(name)).next().unwrap();
+        FuncDecl::wrap(self.sort.ctx, self.testers[n])
+    }
+
+    pub fn is_value(&self, name: &str, what: &Ast<'ctx>) -> Ast<'ctx> {
+        self.is_value_decl(name).app(&[what])
     }
 }
 
