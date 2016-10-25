@@ -11,6 +11,7 @@ impl Config {
                 let guard = Z3_MUTEX.lock().unwrap();
                 let p = Z3_mk_config();
                 debug!("new config {:p}", p);
+                assert!(!p.is_null());
                 p
             }
         }

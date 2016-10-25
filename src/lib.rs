@@ -11,6 +11,8 @@ extern crate lazy_static;
 extern crate z3_sys;
 extern crate libc;
 
+extern crate num;
+
 use std::sync::Mutex;
 use std::ffi::CString;
 use z3_sys::*;
@@ -23,6 +25,9 @@ mod ast;
 mod solver;
 mod optimize;
 mod model;
+mod enumsort;
+mod listsort;
+mod funcdecl;
 
 // Z3 appears to be only mostly-threadsafe, a few initializers
 // and such race; so we mutex-guard all access to the library.
@@ -52,10 +57,35 @@ pub struct Sort<'ctx>
     z3_sort: Z3_sort
 }
 
+pub struct ListSort<'ctx>
+{
+    sort: Sort<'ctx>,
+    nil_decl: Z3_func_decl,
+    is_nil_decl: Z3_func_decl,
+    cons_decl: Z3_func_decl,
+    is_cons_decl: Z3_func_decl,
+    head_decl: Z3_func_decl,
+    tail_decl: Z3_func_decl
+}
+
+pub struct EnumSort<'ctx>
+{
+    sort: Sort<'ctx>,
+    value_names: Box<[String]>,
+    consts: Box<[Z3_func_decl]>,
+    testers: Box<[Z3_func_decl]>
+}
+
 pub struct Ast<'ctx>
 {
     ctx: &'ctx Context,
     z3_ast: Z3_ast
+}
+
+pub struct FuncDecl<'ctx>
+{
+    ctx: &'ctx Context,
+    z3_func_decl: Z3_func_decl
 }
 
 pub struct Solver<'ctx>

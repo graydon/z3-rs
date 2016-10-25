@@ -70,3 +70,64 @@ fn test_solving_for_model() {
     assert!(xv + 2 > 7);
 }
 
+#[test]
+fn test_constructed_sorts() {
+    let _ = env_logger::init();
+    let cfg = Config::new();
+    let ctx = Context::new(&cfg);
+    let solver = Solver::new(&ctx);
+
+    let color = Sort::enumeration(&ctx, "Color", &vec!("Red", "Blue", "Green"));
+    let color_list = Sort::list(&ctx, "ColorList", &color.sort());
+
+    let color_list_sort = color_list.sort();
+    let alist : Ast = ctx.fresh_const("alist", &color_list_sort);
+
+    let red = &color.value("Red");
+    solver.assert(&color_list.is_cons(&alist));
+    solver.assert(&color_list.head(&alist)._eq(red));
+    assert!(solver.check());
+
+    let model = solver.get_model();
+    let blue = &color.value("Blue");
+    assert!(!model.eval(&color_list.head(&alist)._eq(blue)).unwrap().as_bool().unwrap());
+    assert!( model.eval(&color_list.head(&alist)._eq(red )).unwrap().as_bool().unwrap());
+}
+
+#[test]
+fn test_lists() {
+    let _ = env_logger::init();
+    let cfg = Config::new();
+    let ctx = Context::new(&cfg);
+    let solver = Solver::new(&ctx);
+
+    let my_list = Sort::list(&ctx, "MyList", &Sort::int(&ctx));
+    let list_value = my_list.cons(&ctx.from_i64(10), &my_list.cons(&ctx.from_i64(20), &my_list.nil()));
+
+    let snd = my_list.head(&my_list.tail(&list_value));
+    assert!(solver.check());
+    assert_eq!(solver.get_model().eval(&snd).unwrap().as_i64().unwrap(), 20i64);
+}
+
+#[test]
+fn test_forall() {
+    let _ = env_logger::init();
+    let cfg = Config::new();
+    let ctx = Context::new(&cfg);
+    let solver = Solver::new(&ctx);
+
+    let xsym = Symbol::from_string(&ctx, "x");
+    let sort = Sort::int(&ctx);
+
+    let y = Ast::fresh_const(&ctx, "y", &sort);
+
+    let x = Ast::bound(0, &sort);
+    let q = Ast::forall_bound(&[(&xsym, &x)], &x._eq(&ctx.from_i64(100)).implies(&x._eq(&y)));
+    // Equivalent:
+    //let x = Ast::new_const(&xsym, &sort);
+    //let q = Ast::forall_const(&[&x], &x._eq(&ctx.from_i64(100)).implies(&x._eq(&y)));
+
+    solver.assert(&q);
+    assert!(solver.check());
+    assert_eq!(solver.get_model().eval(&y).unwrap().as_i64().unwrap(), 100);
+}
