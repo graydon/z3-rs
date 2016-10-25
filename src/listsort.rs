@@ -1,4 +1,3 @@
-use z3_sys::*;
 use Ast;
 use Sort;
 use ListSort;
@@ -7,7 +6,6 @@ use Z3_MUTEX;
 use std::fmt::{Formatter,Display};
 use std;
 
-use ast;
 use sort;
 
 impl<'ctx> ListSort<'ctx> {

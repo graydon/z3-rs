@@ -5,13 +5,11 @@ use FuncDecl;
 use Context;
 use Symbol;
 use Z3_MUTEX;
-use std::ptr;
 use std::ffi::{CStr,CString};
 use std::fmt::{Formatter,Display};
 use std;
 
 use ast;
-use sort;
 use context;
 use num::FromPrimitive;
 

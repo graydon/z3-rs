@@ -1,14 +1,11 @@
-use z3_sys::*;
 use Sort;
 use Ast;
 use EnumSort;
 use FuncDecl;
 use Z3_MUTEX;
-use std::ptr;
 use std::fmt::{Formatter,Display};
 use std;
 
-use ast;
 use sort;
 
 impl<'ctx> EnumSort<'ctx> {
